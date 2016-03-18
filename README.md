@@ -39,7 +39,7 @@ This is plugin for accessing [Netatmo weather station] station from [Rainmeter].
 
 Copyright (C) 2016 Michal Naiman
 
-This Source Code Form is subject to the terms of the GNU General Public License; either version 2 of the License, or (at your option) any later version. If a copy of the GPL was not distributed with this file, You can obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>
+This Source Code Form is subject to the terms of the GNU General Public License; either version 2 of the License, or (at your option) any later version. You can obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>
 
    [Netatmo weather station]: <https://www.netatmo.com/product/station>
    [Rainmeter]: <https://www.rainmeter.net/>
