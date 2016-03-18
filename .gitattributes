@@ -1,0 +1,27 @@
+* text=auto !eol
+.vs/PluginNetAtmo/v14/.suo -text
+ConsoleTest/App.config -text
+ConsoleTest/ConsoleTest.csproj -text
+ConsoleTest/Program.cs -text
+ConsoleTest/Properties/AssemblyInfo.cs -text
+/PluginNetAtmo.sln -text
+PluginNetAtmo/AssemblyInfo.cs -text
+PluginNetAtmo/GlobalSuppressions.cs -text
+PluginNetAtmo/NetAtmo.cs -text
+PluginNetAtmo/PluginNetAtmo.cs -text
+PluginNetAtmo/PluginNetAtmo.csproj -text
+PluginNetAtmo/PluginNetAtmo.csproj.user -text
+PluginNetAtmo/RainmeterAPI.cs -text
+PluginNetAtmo/packages.config -text
+packages/UnmanagedExports.1.2.7/UnmanagedExports.1.2.7.nupkg -text
+packages/UnmanagedExports.1.2.7/lib/net/RGiesecke.DllExport.Metadata.dll -text
+packages/UnmanagedExports.1.2.7/tools/DllExportCmdLets.psm1 -text
+packages/UnmanagedExports.1.2.7/tools/Mono.Cecil.dll -text
+packages/UnmanagedExports.1.2.7/tools/RGiesecke.DllExport.MSBuild.dll -text
+packages/UnmanagedExports.1.2.7/tools/RGiesecke.DllExport.MSBuild.pdb -text
+packages/UnmanagedExports.1.2.7/tools/RGiesecke.DllExport.dll -text
+packages/UnmanagedExports.1.2.7/tools/RGiesecke.DllExport.pdb -text
+packages/UnmanagedExports.1.2.7/tools/RGiesecke.DllExport.targets -text
+packages/UnmanagedExports.1.2.7/tools/init.ps1 -text
+packages/UnmanagedExports.1.2.7/tools/install.ps1 -text
+packages/UnmanagedExports.1.2.7/tools/uninstall.ps1 -text

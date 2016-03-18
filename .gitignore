@@ -1,0 +1,7 @@
+ConsoleTest/bin
+ConsoleTest/obj
+PluginNetAtmo/obj
+PluginNetAtmo/x32
+PluginNetAtmo/x64
+/.vs
+/packages
