@@ -1,9 +1,10 @@
-﻿using Rainmeter;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
+using System.Web.Script.Serialization;
+using Rainmeter;
 
 namespace PluginNetAtmo
 {
@@ -15,6 +16,7 @@ namespace PluginNetAtmo
         public int expires_in { get; set; }
         public int expire_in { get; set; }
     }
+
     public class DashboardDataOutdoor
     {
         public int time_utc { get; set; }
@@ -26,6 +28,7 @@ namespace PluginNetAtmo
         public double min_temp { get; set; }
         public double max_temp { get; set; }
     }
+
     public class Module
     {
         public string _id { get; set; }
@@ -41,6 +44,7 @@ namespace PluginNetAtmo
         public int rf_status { get; set; }
         public int firmware { get; set; }
     }
+
     public class Place
     {
         public int altitude { get; set; }
@@ -49,6 +53,7 @@ namespace PluginNetAtmo
         public string timezone { get; set; }
         public IList<double> location { get; set; }
     }
+
     public class DashboardDataIndoor
     {
         public double AbsolutePressure { get; set; }
@@ -63,6 +68,7 @@ namespace PluginNetAtmo
         public double min_temp { get; set; }
         public double max_temp { get; set; }
     }
+
     public class Device
     {
         public string _id { get; set; }
@@ -83,6 +89,7 @@ namespace PluginNetAtmo
         public int wifi_status { get; set; }
         public List<string> friend_users { get; set; }
     }
+
     public class Administrative
     {
         public string country { get; set; }
@@ -93,16 +100,19 @@ namespace PluginNetAtmo
         public int unit { get; set; }
         public int windunit { get; set; }
     }
+
     public class User
     {
         public string mail { get; set; }
         public Administrative administrative { get; set; }
     }
+
     public class Body
     {
         public List<Device> devices { get; set; }
         public User user { get; set; }
     }
+
     public class Devices
     {
         public Body body { get; set; }
@@ -110,20 +120,6 @@ namespace PluginNetAtmo
         public double time_exec { get; set; }
         public int time_server { get; set; }
     }
-    //public class Body2
-    //{
-    //    public int beg_time { get; set; }
-    //    public int step_time { get; set; }
-    //    public List<List<double?>> value { get; set; }
-    //}
-
-    //public class Measures
-    //{
-    //    public List<Body2> body { get; set; }
-    //    public string status { get; set; }
-    //    public double time_exec { get; set; }
-    //    public int time_server { get; set; }
-    //}
 
     public class AtmoLogin
     {
@@ -155,33 +151,29 @@ namespace PluginNetAtmo
 
             try
             {
-                string postData = "grant_type=password&client_id=" + WebUtility.HtmlEncode(loginData.client_id) + "&client_secret=" +
+                var postData = "grant_type=password&client_id=" + WebUtility.HtmlEncode(loginData.client_id) + "&client_secret=" +
                     WebUtility.HtmlEncode(loginData.client_secret) + "&username=" + WebUtility.HtmlEncode(loginData.username) +
                     "&password=" + WebUtility.HtmlEncode(loginData.password);
-                byte[] postArray = Encoding.UTF8.GetBytes(postData);
+                var postArray = Encoding.UTF8.GetBytes(postData);
 
                 using (var reqStream = request.GetRequestStream())
                     reqStream.Write(postArray, 0, postArray.Length);
 
-                using (StreamReader sr = new StreamReader(request.GetResponse().GetResponseStream()))
+                using (var sr = new StreamReader(request.GetResponse().GetResponseStream()))
                 {
-                    string json = sr.ReadToEnd();
-                    tokenData = (new System.Web.Script.Serialization.JavaScriptSerializer()).Deserialize<AtmoToken>(json);
+                    var json = sr.ReadToEnd();
+                    tokenData = (new JavaScriptSerializer()).Deserialize<AtmoToken>(json);
                 }
 
                 lastTokenRefresh = DateTime.Now;
-                if (Log != null)
-                {
-                    Log(API.LogType.Notice, "PluginNetAtmo.dll: Login to NetAtmo succeeded");
-                    Log(API.LogType.Debug, "PluginNetAtmo.dll: Created new AccessToken: " + tokenData.access_token);
-                }
+                Log?.Invoke(API.LogType.Notice, "PluginNetAtmo.dll: Login to NetAtmo succeeded");
+                Log?.Invoke(API.LogType.Debug, "PluginNetAtmo.dll: Created new AccessToken: " + tokenData.access_token);
 
                 return true;
             }
             catch(Exception ex)
             {
-                if (Log != null)
-                    Log(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.Login: " + ex.Message);
+                Log?.Invoke(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.Login: " + ex.Message);
                 return false;
             }
         }
@@ -191,46 +183,39 @@ namespace PluginNetAtmo
             if (tokenData == null)
                 return Login();
 
-            if (lastTokenRefresh.AddSeconds(tokenData.expire_in - 600) < DateTime.Now)
+            if (lastTokenRefresh.AddSeconds(tokenData.expire_in - 600) >= DateTime.Now) return true;
+
+            try
             {
-                try
+                var request = (HttpWebRequest)WebRequest.Create("https://api.netatmo.com/oauth2/token");
+                request.ContentType = "application/x-www-form-urlencoded;charset=UTF-8";
+                request.Method = "POST";
+
+                var postData = "grant_type=refresh_token&client_id=" + WebUtility.HtmlEncode(loginData.client_id) + "&client_secret=" +
+                               WebUtility.HtmlEncode(loginData.client_secret) + "&refresh_token=" + WebUtility.HtmlEncode(tokenData.refresh_token);
+                var postArray = Encoding.UTF8.GetBytes(postData);
+
+                using (var reqStream = request.GetRequestStream())
+                    reqStream.Write(postArray, 0, postArray.Length);
+
+                using (var sr = new StreamReader(request.GetResponse().GetResponseStream()))
                 {
-                    var request = (HttpWebRequest)WebRequest.Create("https://api.netatmo.com/oauth2/token");
-                    request.ContentType = "application/x-www-form-urlencoded;charset=UTF-8";
-                    request.Method = "POST";
-
-                    string postData = "grant_type=refresh_token&client_id=" + WebUtility.HtmlEncode(loginData.client_id) + "&client_secret=" +
-                        WebUtility.HtmlEncode(loginData.client_secret) + "&refresh_token=" + WebUtility.HtmlEncode(tokenData.refresh_token);
-                    byte[] postArray = Encoding.UTF8.GetBytes(postData);
-
-                    using (var reqStream = request.GetRequestStream())
-                        reqStream.Write(postArray, 0, postArray.Length);
-
-                    using (StreamReader sr = new StreamReader(request.GetResponse().GetResponseStream()))
-                    {
-                        string json = sr.ReadToEnd();
-                        tokenData = (new System.Web.Script.Serialization.JavaScriptSerializer()).Deserialize<AtmoToken>(json);
-                    }
-
-                    lastTokenRefresh = DateTime.Now;
-
-                    if (Log != null)
-                    {
-                        Log(API.LogType.Notice, "PluginNetAtmo.dll: Renewal of login token to NetAtmo succeeded");
-                        Log(API.LogType.Debug, "PluginNetAtmo.dll: Renewed AccessToken: " + tokenData.access_token);
-                    }
-
-                    return true;
+                    var json = sr.ReadToEnd();
+                    tokenData = (new JavaScriptSerializer()).Deserialize<AtmoToken>(json);
                 }
-                catch (Exception ex)
-                {
-                    if (Log != null)
-                        Log(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.LoginIfExpiredOrNotLogged: " + ex.Message);
-                    return false;
-                }
-            }
-            else
+
+                lastTokenRefresh = DateTime.Now;
+
+                Log?.Invoke(API.LogType.Notice, "PluginNetAtmo.dll: Renewal of login token to NetAtmo succeeded");
+                Log?.Invoke(API.LogType.Debug, "PluginNetAtmo.dll: Renewed AccessToken: " + tokenData.access_token);
+
                 return true;
+            }
+            catch (Exception ex)
+            {
+                Log?.Invoke(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.LoginIfExpiredOrNotLogged: " + ex.Message);
+                return false;
+            }
         }
 
         public Devices GetStationsData()
@@ -242,49 +227,17 @@ namespace PluginNetAtmo
             {
                 var request = (HttpWebRequest)WebRequest.Create("https://api.netatmo.com/api/getstationsdata?access_token=" + WebUtility.HtmlEncode(tokenData.access_token));
 
-                using (StreamReader sr = new StreamReader(request.GetResponse().GetResponseStream()))
+                using (var sr = new StreamReader(request.GetResponse().GetResponseStream()))
                 {
-                    string json = sr.ReadToEnd();
-                    return (new System.Web.Script.Serialization.JavaScriptSerializer()).Deserialize<Devices>(json);
+                    var json = sr.ReadToEnd();
+                    return (new JavaScriptSerializer()).Deserialize<Devices>(json);
                 }
             }
             catch (Exception ex)
             {
-                if (Log != null)
-                    Log(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.GetStationsData: " + ex.Message);
+                Log?.Invoke(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.GetStationsData: " + ex.Message);
                 return null;
             }
         }
-
-        //public Measures GetMeasure(string device_id, string module_id)
-        //{
-            //            if (!LoginIfExpiredOrNotLogged())
-            //return null;
-
-            //try
-            //{
-            //    HttpWebRequest request;
-
-            //    if (module_id.Length == 0)
-            //        request = (HttpWebRequest)WebRequest.Create("https://api.netatmo.com/api/getmeasure?access_token=" + WebUtility.HtmlEncode(tokenData.access_token) +
-            //                "&device_id=" + WebUtility.HtmlEncode(device_id) + "&scale=" + WebUtility.HtmlEncode("30min") + "&type=" + WebUtility.HtmlEncode("Temperature,CO2,Humidity,Pressure,Noise"));
-            //    else
-            //        request = (HttpWebRequest)WebRequest.Create("https://api.netatmo.com/api/getmeasure?access_token=" + WebUtility.HtmlEncode(tokenData.access_token) +
-            //                "&device_id=" + WebUtility.HtmlEncode(device_id) + "&module_id=" +
-            //                WebUtility.HtmlEncode(module_id) + "&scale=" + WebUtility.HtmlEncode("30min") + "&type=" + WebUtility.HtmlEncode("Temperature,CO2,Humidity,Pressure,Noise"));
-
-            //    using (StreamReader sr = new StreamReader(request.GetResponse().GetResponseStream()))
-            //    {
-            //        string json = sr.ReadToEnd();
-            //        return (new System.Web.Script.Serialization.JavaScriptSerializer()).Deserialize<Measures>(json);
-            //    }
-            //}
-            //catch (Exception ex)
-            //{
-            //if (Log != null)
-            //    Log(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.GetMeasure: " + ex.Message);
-            //    return null;
-            //}
-        //}
     }
 }

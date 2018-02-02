@@ -19,12 +19,13 @@ namespace PluginNetAtmo
 {
     internal class Measure
     {
-        enum Action
+        private enum Action
         {
             GetValue,
             GetValues
         }
-        enum ValueName
+
+        private enum ValueName
         {
             Temperature,
             CO2,
@@ -43,16 +44,12 @@ namespace PluginNetAtmo
         NetAtmo m_Atmo;
         API rainmeterAPI;
 
-        internal Measure()
-        { 
-        }
-
         private void Logger(API.LogType log_type, string message)
         {
             API.Log(log_type, "[" + rainmeterAPI.GetMeasureName() + "] " + message);
         }
        
-        internal void Reload(Rainmeter.API rm, ref double maxValue)
+        internal void Reload(API rm, ref double maxValue)
         {
             rainmeterAPI = rm;
             Logger(API.LogType.Debug, "PluginNetAtmo.dll: Entering function: Reload");
@@ -130,7 +127,7 @@ namespace PluginNetAtmo
         }
         private void LogDevicesIDs()
         {
-            string strModuleIDs = "";
+            var strModuleIDs = "";
 
             try
             {
@@ -176,7 +173,7 @@ namespace PluginNetAtmo
                             return 0;
                         }
 
-                        if (m_DeviceModuleID == null || m_DeviceModuleID.Length == 0)
+                        if (string.IsNullOrEmpty(m_DeviceModuleID))
                         {
                             Logger(API.LogType.Error, "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action + ". DeviceModuleID cannot be empty");
                             return 0;
@@ -301,13 +298,13 @@ namespace PluginNetAtmo
     {
         static IntPtr StringBuffer = IntPtr.Zero;
 
-        [RGiesecke.DllExport.DllExport]
+        [DllExport]
         public static void Initialize(ref IntPtr data, IntPtr rm)
         {
             data = GCHandle.ToIntPtr(GCHandle.Alloc(new Measure()));
         }
 
-        [RGiesecke.DllExport.DllExport]
+        [DllExport]
         public static void Finalize(IntPtr data)
         {
             GCHandle.FromIntPtr(data).Free();
@@ -319,21 +316,21 @@ namespace PluginNetAtmo
             }
         }
 
-        [RGiesecke.DllExport.DllExport]
+        [DllExport]
         public static void Reload(IntPtr data, IntPtr rm, ref double maxValue)
         {
             Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
             measure.Reload(new Rainmeter.API(rm), ref maxValue);
         }
 
-        [RGiesecke.DllExport.DllExport]
+        [DllExport]
         public static double Update(IntPtr data)
         {
             Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
             return measure.Update();
         }
 
-        [RGiesecke.DllExport.DllExport]
+        [DllExport]
         public static IntPtr GetString(IntPtr data)
         {
             Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
