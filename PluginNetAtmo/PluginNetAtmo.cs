@@ -163,19 +163,24 @@ namespace PluginNetAtmo
         }
         internal double Update()
         {
-            switch (m_Action)
+            try
             {
-                case Action.GetValue:
+                switch (m_Action)
+                {
+                    case Action.GetValue:
                     {
                         if (m_Atmo == null)
                         {
-                            Logger(API.LogType.Error, "PluginNetAtmo.dll: Processing function: LogDevicesIDs. NetAtmo not initialized");
+                            Logger(API.LogType.Error,
+                                "PluginNetAtmo.dll: Processing function: Update. NetAtmo not initialized");
                             return 0;
                         }
 
                         if (string.IsNullOrEmpty(m_DeviceModuleID))
                         {
-                            Logger(API.LogType.Error, "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action + ". DeviceModuleID cannot be empty");
+                            Logger(API.LogType.Error,
+                                "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action +
+                                ". DeviceModuleID cannot be empty");
                             return 0;
                         }
 
@@ -183,103 +188,175 @@ namespace PluginNetAtmo
 
                         if (station == null)
                         {
-                            Logger(API.LogType.Error, "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action + ". GetStationsData returned null");
+                            Logger(API.LogType.Error,
+                                "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action +
+                                ". GetStationsData returned null");
                             return 0;
                         }
 
                         switch (m_ValueName)
                         {
                             case ValueName.Temperature:
+                            {
+                                foreach (var device in station.body.devices)
                                 {
-                                    foreach (var device in station.body.devices)
+                                    if (device._id == m_DeviceModuleID)
                                     {
-                                        if (device._id == m_DeviceModuleID)
+                                        if (device.dashboard_data != null)
                                             return device.dashboard_data.Temperature;
 
-                                        foreach (var module in device.modules)
-                                            if(module._id == m_DeviceModuleID)
-                                                return module.dashboard_data.Temperature;
+                                        Logger(API.LogType.Error,
+                                            "PluginNetAtmo.dll: Processing function: Update, NetAtmo reports that device is unreachable - dashboard_data not returned.");
                                     }
 
-                                    Logger(API.LogType.Error, "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action + ". DeviceModuleID=" + m_DeviceModuleID + " cannot be found");
-                                    return 0;
+                                    foreach (var module in device.modules)
+                                        if (module._id == m_DeviceModuleID)
+                                        {
+                                            if (module.dashboard_data != null)
+                                                return module.dashboard_data.Temperature;
+
+                                            Logger(API.LogType.Error,
+                                                "PluginNetAtmo.dll: Processing function: Update, NetAtmo reports that device is unreachable - dashboard_data not returned.");
+                                        }
                                 }
+
+                                Logger(API.LogType.Error,
+                                    "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action +
+                                    ". DeviceModuleID=" + m_DeviceModuleID + " cannot be found");
+                                return 0;
+                            }
                             case ValueName.CO2:
+                            {
+                                foreach (var device in station.body.devices)
                                 {
-                                    foreach (var device in station.body.devices)
+                                    if (device._id == m_DeviceModuleID)
                                     {
-                                        if (device._id == m_DeviceModuleID)
+                                        if (device.dashboard_data != null)
                                             return device.dashboard_data.CO2;
 
-                                        foreach (var module in device.modules)
-                                            if (module._id == m_DeviceModuleID)
-                                            {
-                                                Logger(API.LogType.Error, "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action + ". DeviceModuleID=" + m_DeviceModuleID + " found but it cannot measure " + m_ValueName);
-                                                return 0;
-                                            }
+                                        Logger(API.LogType.Error,
+                                            "PluginNetAtmo.dll: Processing function: Update, NetAtmo reports that device is unreachable - dashboard_data not returned.");
                                     }
 
-                                    Logger(API.LogType.Error, "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action + ". DeviceModuleID=" + m_DeviceModuleID + " cannot be found");
-                                    return 0;
+                                    foreach (var module in device.modules)
+                                        if (module._id == m_DeviceModuleID)
+                                        {
+                                            Logger(API.LogType.Error,
+                                                "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action +
+                                                ". DeviceModuleID=" + m_DeviceModuleID +
+                                                " found but it cannot measure " + m_ValueName);
+                                            return 0;
+                                        }
                                 }
+
+                                Logger(API.LogType.Error,
+                                    "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action +
+                                    ". DeviceModuleID=" + m_DeviceModuleID + " cannot be found");
+                                return 0;
+                            }
                             case ValueName.Humidity:
+                            {
+                                foreach (var device in station.body.devices)
                                 {
-                                    foreach (var device in station.body.devices)
+                                    if (device._id == m_DeviceModuleID)
                                     {
-                                        if (device._id == m_DeviceModuleID)
+                                        if (device.dashboard_data != null)
                                             return device.dashboard_data.Humidity;
 
-                                        foreach (var module in device.modules)
-                                            if (module._id == m_DeviceModuleID)
-                                                return module.dashboard_data.Humidity;
+                                        Logger(API.LogType.Error,
+                                            "PluginNetAtmo.dll: Processing function: Update, NetAtmo reports that device is unreachable - dashboard_data not returned.");
                                     }
 
-                                    Logger(API.LogType.Error, "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action + ". DeviceModuleID=" + m_DeviceModuleID + " cannot be found");
-                                    return 0;
+                                    foreach (var module in device.modules)
+                                        if (module._id == m_DeviceModuleID)
+                                        {
+                                            if (module.dashboard_data != null)
+                                                return module.dashboard_data.Humidity;
+
+                                            Logger(API.LogType.Error,
+                                                "PluginNetAtmo.dll: Processing function: Update, NetAtmo reports that device is unreachable - dashboard_data not returned.");
+                                        }
                                 }
+
+                                Logger(API.LogType.Error,
+                                    "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action +
+                                    ". DeviceModuleID=" + m_DeviceModuleID + " cannot be found");
+                                return 0;
+                            }
                             case ValueName.Noise:
+                            {
+                                foreach (var device in station.body.devices)
                                 {
-                                    foreach (var device in station.body.devices)
+                                    if (device._id == m_DeviceModuleID)
                                     {
-                                        if (device._id == m_DeviceModuleID)
+                                        if (device.dashboard_data != null)
                                             return device.dashboard_data.Noise;
 
-                                        foreach (var module in device.modules)
-                                            if (module._id == m_DeviceModuleID)
-                                            {
-                                                Logger(API.LogType.Error, "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action + ". DeviceModuleID=" + m_DeviceModuleID + " found but it cannot measure " + m_ValueName);
-                                                return 0;
-                                            }
+                                        Logger(API.LogType.Error,
+                                            "PluginNetAtmo.dll: Processing function: Update, NetAtmo reports that device is unreachable - dashboard_data not returned.");
                                     }
 
-                                    Logger(API.LogType.Error, "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action + ". DeviceModuleID=" + m_DeviceModuleID + " cannot be found");
-                                    return 0;
+                                    foreach (var module in device.modules)
+                                        if (module._id == m_DeviceModuleID)
+                                        {
+                                            Logger(API.LogType.Error,
+                                                "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action +
+                                                ". DeviceModuleID=" + m_DeviceModuleID +
+                                                " found but it cannot measure " + m_ValueName);
+                                            return 0;
+                                        }
                                 }
+
+                                Logger(API.LogType.Error,
+                                    "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action +
+                                    ". DeviceModuleID=" + m_DeviceModuleID + " cannot be found");
+                                return 0;
+                            }
                             case ValueName.Pressure:
+                            {
+                                foreach (var device in station.body.devices)
                                 {
-                                    foreach (var device in station.body.devices)
+                                    if (device._id == m_DeviceModuleID)
                                     {
-                                        if (device._id == m_DeviceModuleID)
+                                        if (device.dashboard_data != null)
                                             return device.dashboard_data.Pressure;
 
-                                        foreach (var module in device.modules)
-                                            if (module._id == m_DeviceModuleID)
-                                            {
-                                                Logger(API.LogType.Error, "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action + ". DeviceModuleID=" + m_DeviceModuleID + " found but it cannot measure " + m_ValueName);
-                                                return 0;
-                                            }
+                                        Logger(API.LogType.Error,
+                                            "PluginNetAtmo.dll: Processing function: Update, NetAtmo reports that device is unreachable - dashboard_data not returned.");
                                     }
 
-                                    Logger(API.LogType.Error, "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action + ". DeviceModuleID=" + m_DeviceModuleID + " cannot be found");
-                                    return 0;
+                                    foreach (var module in device.modules)
+                                        if (module._id == m_DeviceModuleID)
+                                        {
+                                            Logger(API.LogType.Error,
+                                                "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action +
+                                                ". DeviceModuleID=" + m_DeviceModuleID +
+                                                " found but it cannot measure " + m_ValueName);
+                                            return 0;
+                                        }
                                 }
+
+                                Logger(API.LogType.Error,
+                                    "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action +
+                                    ". DeviceModuleID=" + m_DeviceModuleID + " cannot be found");
+                                return 0;
+                            }
                         }
 
-                        Logger(API.LogType.Error, "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action + ". Invalid ValueName=" + m_ValueName + " or DeviceModuleID=" + m_DeviceModuleID);
+                        Logger(API.LogType.Error,
+                            "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action +
+                            ". Invalid ValueName=" + m_ValueName + " or DeviceModuleID=" + m_DeviceModuleID);
                         return 0;
                     }
+                }
             }
-            
+            catch (Exception ex)
+            {
+                Logger(API.LogType.Error,
+                    "PluginNetAtmo.dll: Processing function: Update, Action=" + m_Action +
+                    ". ExceptionMessage=" + ex.Message);
+            }
+
             // Else values are not a numbers. Therefore will be returned in GetString.
             return 0.0;
         }
