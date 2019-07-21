@@ -35,6 +35,11 @@ This is plugin for accessing [Netatmo weather station] station from [Rainmeter].
     DeviceModuleID=xx:xx:xx:xx:xx:xx
 ```
 
+### Prerequisites ###
+
+* .NET Framework minimum 4.6.2 - https://dotnet.microsoft.com/download/dotnet-framework
+* You need to install correct version of dll x64 for 64bit Rainmeter and x86 for 32bit
+
 ### License ###
 
 Copyright (C) 2016 Michal Naiman
