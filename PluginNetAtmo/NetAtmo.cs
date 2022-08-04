@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -125,8 +126,14 @@ namespace PluginNetAtmo
     {
         public string client_id { get; set; }
         public string client_secret { get; set; }
-        public string username { get; set; }
-        public string password { get; set; }
+        public string scope { get; set; }
+        public string code { get; set; }
+    }
+
+    enum AccessTokenRequest
+    {
+        Authorize,
+        Refresh
     }
 
     public delegate void Logger(API.LogType log_type, string message);
@@ -134,26 +141,41 @@ namespace PluginNetAtmo
     public class NetAtmo
     {
         private AtmoLogin loginData;
-        private AtmoToken tokenData;
-        private DateTime lastTokenRefresh;
         private Logger Log;
+        private IniFile settingsIni;
+        private string refreshToken;
+        private string accessToken;
+        private DateTime accessTokenExpireAt;
+        private const string redirectUrl = "https://domain_not_exist_for_sure:56789";
 
-        public NetAtmo(string client_id, string client_secret, string username, string password, Logger log = null)
+        public NetAtmo(string client_id, string client_secret, string scope, string code, IniFile settingsIni, Logger log)
         {
-            loginData = new AtmoLogin { client_id = client_id, client_secret = client_secret, username = username, password = password };
+            loginData = new AtmoLogin { client_id = client_id, client_secret = client_secret, scope = scope, code = code };
             Log = log;
+            this.settingsIni = settingsIni;
+
+            refreshToken = settingsIni.Read("PluginNetAtmo", "RefreshToken");
+
+            if (!DateTime.TryParseExact(settingsIni.Read("PluginNetAtmo", "ExpireIn"), "s", DateTimeFormatInfo.InvariantInfo, DateTimeStyles.None, out accessTokenExpireAt))
+                accessTokenExpireAt = new DateTime(1970, 1, 1);
         }
-        private bool Login()
+
+        private bool RequestAccessToken(AccessTokenRequest atr)
         {
             var request = (HttpWebRequest)WebRequest.Create("https://api.netatmo.com/oauth2/token");
             request.ContentType = "application/x-www-form-urlencoded;charset=UTF-8";
             request.Method = "POST";
 
+
+            var postData = "grant_type=refresh_token&client_id=" + WebUtility.HtmlEncode(loginData.client_id) + "&client_secret=" +
+                WebUtility.HtmlEncode(loginData.client_secret) + "&refresh_token=" + WebUtility.HtmlEncode(refreshToken); ;
+
+            if (atr == AccessTokenRequest.Authorize)
+                postData = "grant_type=authorization_code&client_id=" + WebUtility.HtmlEncode(loginData.client_id) + "&client_secret=" +
+                    WebUtility.HtmlEncode(loginData.client_secret) + "&scope=" + WebUtility.HtmlEncode(loginData.scope) +
+                    "&code=" + WebUtility.HtmlEncode(loginData.code) + "&redirect_uri=" + WebUtility.HtmlEncode(redirectUrl);
             try
             {
-                var postData = "grant_type=password&client_id=" + WebUtility.HtmlEncode(loginData.client_id) + "&client_secret=" +
-                    WebUtility.HtmlEncode(loginData.client_secret) + "&username=" + WebUtility.HtmlEncode(loginData.username) +
-                    "&password=" + WebUtility.HtmlEncode(loginData.password);
                 var postArray = Encoding.UTF8.GetBytes(postData);
 
                 using (var reqStream = request.GetRequestStream())
@@ -162,70 +184,55 @@ namespace PluginNetAtmo
                 using (var sr = new StreamReader(request.GetResponse().GetResponseStream()))
                 {
                     var json = sr.ReadToEnd();
-                    tokenData = (new JavaScriptSerializer()).Deserialize<AtmoToken>(json);
+                    var tokenData = (new JavaScriptSerializer()).Deserialize<AtmoToken>(json);
+                    accessToken = tokenData.access_token;
+                    refreshToken = tokenData.refresh_token;
+                    accessTokenExpireAt = DateTime.Now.AddSeconds(tokenData.expire_in - 1800);
                 }
 
-                lastTokenRefresh = DateTime.Now;
-                Log?.Invoke(API.LogType.Notice, "PluginNetAtmo.dll: Login to NetAtmo succeeded");
-                Log?.Invoke(API.LogType.Debug, "PluginNetAtmo.dll: Created new AccessToken: " + tokenData.access_token);
+                Log.Invoke(API.LogType.Debug, "PluginNetAtmo.dll: Created new AccessToken: " + accessToken);
 
-                return true;
-            }
-            catch(Exception ex)
-            {
-                Log?.Invoke(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.Login: " + ex.Message);
-                return false;
-            }
-        }
-
-        private bool LoginIfExpiredOrNotLogged()
-        {
-            if (tokenData == null)
-                return Login();
-
-            if (lastTokenRefresh.AddSeconds(tokenData.expire_in - 600) >= DateTime.Now) return true;
-
-            try
-            {
-                var request = (HttpWebRequest)WebRequest.Create("https://api.netatmo.com/oauth2/token");
-                request.ContentType = "application/x-www-form-urlencoded;charset=UTF-8";
-                request.Method = "POST";
-
-                var postData = "grant_type=refresh_token&client_id=" + WebUtility.HtmlEncode(loginData.client_id) + "&client_secret=" +
-                               WebUtility.HtmlEncode(loginData.client_secret) + "&refresh_token=" + WebUtility.HtmlEncode(tokenData.refresh_token);
-                var postArray = Encoding.UTF8.GetBytes(postData);
-
-                using (var reqStream = request.GetRequestStream())
-                    reqStream.Write(postArray, 0, postArray.Length);
-
-                using (var sr = new StreamReader(request.GetResponse().GetResponseStream()))
-                {
-                    var json = sr.ReadToEnd();
-                    tokenData = (new JavaScriptSerializer()).Deserialize<AtmoToken>(json);
-                }
-
-                lastTokenRefresh = DateTime.Now;
-
-                Log?.Invoke(API.LogType.Notice, "PluginNetAtmo.dll: Renewal of login token to NetAtmo succeeded");
-                Log?.Invoke(API.LogType.Debug, "PluginNetAtmo.dll: Renewed AccessToken: " + tokenData.access_token);
+                settingsIni.Write("PluginNetAtmo", "RefreshToken", refreshToken);
+                settingsIni.Write("PluginNetAtmo", "ExpireIn", accessTokenExpireAt.ToString("s", DateTimeFormatInfo.InvariantInfo));
 
                 return true;
             }
             catch (Exception ex)
             {
-                Log?.Invoke(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.LoginIfExpiredOrNotLogged: " + ex.Message);
+                Log.Invoke(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.RequestAccessToken: " + ex.Message);
+                Log.Invoke(API.LogType.Error, request.RequestUri.ToString() + postData);
+                Log.Invoke(API.LogType.Error, "In case of failed refresh_token use authorization URL to generate new code and update in config");
+                Log.Invoke(API.LogType.Error, $"https://api.netatmo.com/oauth2/authorize?client_id={WebUtility.HtmlEncode(loginData.client_id)}&scope={WebUtility.HtmlEncode(loginData.scope)}&state={WebUtility.HtmlEncode(Guid.NewGuid().ToString())}&redirect_uri={WebUtility.HtmlEncode(redirectUrl)}");
+
+                settingsIni.DeleteKey("PluginNetAtmo", "RefreshToken");
+                settingsIni.DeleteKey("PluginNetAtmo", "ExpireIn");
                 return false;
             }
         }
 
+        private bool ValidateAndUpdateAccessToken()
+        {
+            if (string.IsNullOrEmpty(accessToken))
+                return RequestAccessToken(AccessTokenRequest.Refresh);
+
+            if (string.IsNullOrEmpty(refreshToken))
+                return RequestAccessToken(AccessTokenRequest.Authorize);
+
+            if (accessTokenExpireAt < DateTime.Now)
+                RequestAccessToken(AccessTokenRequest.Refresh);
+
+            return true;
+        }
+
         public Devices GetStationsData()
         {
-            if (!LoginIfExpiredOrNotLogged())
+            if (!ValidateAndUpdateAccessToken())
                 return null;
 
             try
             {
-                var request = (HttpWebRequest)WebRequest.Create("https://api.netatmo.com/api/getstationsdata?access_token=" + WebUtility.HtmlEncode(tokenData.access_token));
+                var request = (HttpWebRequest)WebRequest.Create("https://api.netatmo.com/api/getstationsdata");
+                request.Headers["Authorization"] = $"Bearer {accessToken}";
 
                 using (var sr = new StreamReader(request.GetResponse().GetResponseStream()))
                 {
@@ -235,7 +242,7 @@ namespace PluginNetAtmo
             }
             catch (Exception ex)
             {
-                Log?.Invoke(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.GetStationsData: " + ex.Message);
+                Log.Invoke(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.GetStationsData: " + ex.Message);
                 return null;
             }
         }

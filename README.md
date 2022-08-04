@@ -4,17 +4,19 @@ This is plugin for accessing [Netatmo weather station] station from [Rainmeter].
 
 ### How do I get set up? ###
 
-* These are your login details to NetAtmo account:
-```sh
-    Username=""
-    Password=""
-```
-
 * In [NetAtmo developer account] create your application and you get:
 ```sh
     ClientID=""
     ClientSecret=""
 ```
+
+* After first run, in About log, there will be authorization URL, open in browser
+* After successful authorization redirect to not existing URL will be made
+* Copy code from browser URL bar https://domain_not_exist_for_sure:56789/?state={random_number_must_be_same_as_about_log}&code={code}
+```sh
+    Code=""
+```
+
 * In RainMeter config use:
 
 ```sh
@@ -23,8 +25,8 @@ This is plugin for accessing [Netatmo weather station] station from [Rainmeter].
     Plugin=SystemVersion.dll
     ClientID=""
     ClientSecret=""
-    Username=""
-    Password=""
+    Scope="read_station"
+    Code=""
     DeviceModuleID=xx:xx:xx:xx:xx:xx
     Action=GetValue
     ValueName=Temperature/CO2/Humidity/Noise/Pressure
@@ -42,7 +44,7 @@ This is plugin for accessing [Netatmo weather station] station from [Rainmeter].
 
 ### License ###
 
-Copyright (C) 2016 Michal Naiman
+Copyright (C) 2022 Michal Naiman
 
 This Source Code Form is subject to the terms of the GNU General Public License; either version 2 of the License, or (at your option) any later version. You can obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>
 

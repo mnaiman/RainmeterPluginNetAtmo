@@ -1,12 +1,12 @@
-name: .NET Build
+name: .NET Build Debug x64
 
 on:
   push:
-    branches: 
-      - '!master'
+    branches-ignore:
+      - master
   pull_request:
-    branches: 
-      - '!master'
+    branches-ignore:
+      - master
 jobs:
 
   build:
@@ -42,6 +42,27 @@ jobs:
     # Build solution
     - name: Build solution
       run: msbuild $env:Solution_Name /p:Configuration=$env:Configuration /p:platform=$env:Platforms
+      env:
+        Platforms: ${{ matrix.platforms }}
+        Configuration: ${{ matrix.configuration }}
+        
+    # Copy artifact files
+    - name: Copy artifact files
+      run: mkdir release_folder && copy PluginNetAtmo\obj\$env:Platforms\$env:Configuration\*.dll release_folder && copy PluginNetAtmo\obj\$env:Platforms\$env:Configuration\*.pdb release_folder
+      env:
+          Platforms: ${{ matrix.platforms }}
+          Configuration: ${{ matrix.configuration }}
+           
+    # Prepare artifact for download    
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: PluginNetAtmo-${{ matrix.configuration }}-${{ matrix.platforms }}-${{ github.sha }}
+        # A file, directory or wildcard pattern that describes what to upload
+        path:  |
+          release_folder\*.dll
+          release_folder\*.pdb
+        retention-days: 5
       env:
         Platforms: ${{ matrix.platforms }}
         Configuration: ${{ matrix.configuration }}
