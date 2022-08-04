@@ -36,7 +36,7 @@ jobs:
       
     # NuGet Restore 
     - name: NuGet Restore packages
-    - run: nuget restore $($env:Solution_Name + ".sln")
+      run: nuget restore $($env:Solution_Name + ".sln")
 
     # Build solution
     - name: Build solution
