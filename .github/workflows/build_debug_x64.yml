@@ -52,5 +52,5 @@ jobs:
       with:
         name: PluginNetAtmo.dll
         # A file, directory or wildcard pattern that describes what to upload
-        path: RainmeterPluginNetAtmo\PluginNetAtmo\bin\x64\Debug
+        path: RainmeterPluginNetAtmo\RainmeterPluginNetAtmo\PluginNetAtmo\obj\x64\Debug\
         retention-days: 5
