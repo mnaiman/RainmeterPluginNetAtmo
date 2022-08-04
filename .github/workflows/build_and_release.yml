@@ -1,0 +1,46 @@
+name: .NET Build and Release
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+        platforms: [x86, x64]
+
+    runs-on: windows-latest
+    
+    env:
+      Solution_Name: PluginNetAtmo
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    # Add MSBuild to the PATH
+    - name: Setup MSBuild.exe
+      uses: microsoft/setup-msbuild@v1
+      
+    # Setup NuGet 
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v1
+      
+    # NuGet Restore 
+    - name: NuGet Restore packages
+      run: nuget restore $($env:Solution_Name + ".sln")
+
+    # Build solution
+    - name: Build solution
+      run: msbuild $env:Solution_Name /p:Configuration=$env:Configuration /p:platform=$env:Platforms
+      env:
+        Platforms: ${{ matrix.platforms }}
+        Configuration: ${{ matrix.configuration }}
