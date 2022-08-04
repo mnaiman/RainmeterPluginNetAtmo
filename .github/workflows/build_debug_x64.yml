@@ -46,11 +46,18 @@ jobs:
         Platforms: ${{ matrix.platforms }}
         Configuration: ${{ matrix.configuration }}
         
+    # Copy artifact files
+    - name: Copy artifact files
+      run: mkdir PluginNetAtmo-$env:Platforms-$env:Configuration && copy PluginNetAtmo\obj\$env:Platforms\$env:Configuration\*.dll PluginNetAtmo-$env:Platforms-$env:Configuration && copy PluginNetAtmo\obj\$env:Platforms\$env:Configuration\*.pdb PluginNetAtmo-$env:Platforms-$env:Configuration
+      env:
+          Platforms: ${{ matrix.platforms }}
+          Configuration: ${{ matrix.configuration }}
+          
     # Prepare artifact for download    
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: PluginNetAtmo-${{ matrix.configuration }}-${{ matrix.platforms }}.dll
+        name: PluginNetAtmo-${{ matrix.configuration }}-${{ matrix.platforms }}-${GITHUB_SHA::6}.dll
         # A file, directory or wildcard pattern that describes what to upload
         path:  |
           PluginNetAtmo\obj\$env:Platforms\$env:Configuration\*.dll
@@ -59,7 +66,3 @@ jobs:
       env:
         Platforms: ${{ matrix.platforms }}
         Configuration: ${{ matrix.configuration }}
-        
-        
-        
-        
