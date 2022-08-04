@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Rainmeter;
+using NXPorts.Attributes;
 
 /*
     [measure]
     Measure=Plugin
     Plugin=SystemVersion.dll
     ClientID=""
-    ClientSecret=""
-    Username=""
-    Password=""
+    Scope=""
+    Code=""
     DeviceModuleID=xx:xx:xx:xx:xx:xx
     Action=GetValue/GetValues
     ValueName=Temperature/CO2/Humidity/Noise/Pressure
