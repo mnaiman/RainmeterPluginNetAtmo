@@ -2,12 +2,14 @@
 using System.Runtime.InteropServices;
 using Rainmeter;
 using NXPorts.Attributes;
+using System.Net;
 
 /*
     [measure]
     Measure=Plugin
     Plugin=SystemVersion.dll
     ClientID=""
+    ClientSecret=""
     Scope=""
     Code=""
     DeviceModuleID=xx:xx:xx:xx:xx:xx
@@ -39,8 +41,8 @@ namespace PluginNetAtmo
         private string m_DeviceModuleID;
         string m_ClientID;
         string m_ClientSecret;
-        string m_Username;
-        string m_Password;
+        string m_Scope;
+        string m_Code;
         NetAtmo m_Atmo;
         API rainmeterAPI;
 
@@ -48,7 +50,12 @@ namespace PluginNetAtmo
         {
             API.Log(log_type, "[" + rainmeterAPI.GetMeasureName() + "] " + message);
         }
-       
+
+        private void DelegateMethod(string message)
+        {
+            Console.WriteLine(message);
+        }
+
         internal void Reload(API rm, ref double maxValue)
         {
             rainmeterAPI = rm;
@@ -97,8 +104,8 @@ namespace PluginNetAtmo
 
             m_ClientID = rm.ReadString("ClientID", "");
             m_ClientSecret = rm.ReadString("ClientSecret", "");
-            m_Username = rm.ReadString("Username", "");
-            m_Password = rm.ReadString("Password", "");
+            m_Scope = rm.ReadString("Scope", "");
+            m_Code = rm.ReadString("Code", "");
             m_DeviceModuleID = rm.ReadString("DeviceModuleID", "");
             
             if (m_ClientID.Length == 0)
@@ -111,18 +118,21 @@ namespace PluginNetAtmo
                 Logger(API.LogType.Error, "PluginNetAtmo.dll: ClientSecret cannot be empty");
                 return;
             }
-            if (m_Username.Length == 0)
+            if (m_Scope.Length == 0)
             {
-                Logger(API.LogType.Error, "PluginNetAtmo.dll: Username cannot be empty");
+                Logger(API.LogType.Error, "PluginNetAtmo.dll: Scope cannot be empty");
                 return;
             }
-            if (m_Password.Length == 0)
+            if (m_Code.Length == 0)
             {
-                Logger(API.LogType.Error, "PluginNetAtmo.dll: Password cannot be empty");
+                Logger(API.LogType.Error, "PluginNetAtmo.dll: Code cannot be empty.");
                 return;
             }
 
-            m_Atmo = new NetAtmo(m_ClientID, m_ClientSecret, m_Username, m_Password, Logger);
+            string settingsFile = rm.GetSettingsFile();
+            Logger(API.LogType.Debug, $"PluginNetAtmo.dll: Using Settings file: {settingsFile}");
+
+            m_Atmo = new NetAtmo(m_ClientID, m_ClientSecret, m_Scope, m_Code, new IniFile(settingsFile), Logger);
             LogDevicesIDs();
         }
         private void LogDevicesIDs()
