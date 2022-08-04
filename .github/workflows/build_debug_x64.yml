@@ -45,14 +45,18 @@ jobs:
       env:
         Platforms: ${{ matrix.platforms }}
         Configuration: ${{ matrix.configuration }}
-    
-    - run: ls PluginNetAtmo\
-    
+        
     # Prepare artifact for download    
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3
       with:
         name: PluginNetAtmo.dll
         # A file, directory or wildcard pattern that describes what to upload
-        path: PluginNetAtmo\obj\x64\Debug\
+        path:  |
+          PluginNetAtmo\obj\x64\Debug\*.dll
+          PluginNetAtmo\obj\x64\Debug\*.pdb
         retention-days: 5
+        
+        
+        
+        
