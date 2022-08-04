@@ -46,7 +46,7 @@ jobs:
         Platforms: ${{ matrix.platforms }}
         Configuration: ${{ matrix.configuration }}
     
-    - run: ls
+    - run: ls PluginNetAtmo\
     
     # Prepare artifact for download    
     - name: Upload a Build Artifact
@@ -54,5 +54,5 @@ jobs:
       with:
         name: PluginNetAtmo.dll
         # A file, directory or wildcard pattern that describes what to upload
-        path: RainmeterPluginNetAtmo\RainmeterPluginNetAtmo\PluginNetAtmo\obj\x64\Debug\
+        path: PluginNetAtmo\obj\x64\Debug\
         retention-days: 5
