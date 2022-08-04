@@ -50,12 +50,15 @@ jobs:
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: PluginNetAtmo.dll
+        name: PluginNetAtmo-${{ matrix.configuration }}-${{ matrix.platforms }}.dll
         # A file, directory or wildcard pattern that describes what to upload
         path:  |
-          PluginNetAtmo\obj\x64\Debug\*.dll
-          PluginNetAtmo\obj\x64\Debug\*.pdb
+          PluginNetAtmo\obj\$env:Platforms\$env:Configuration\*.dll
+          PluginNetAtmo\obj\$env:Platforms\$env:Configuration\*.pdb
         retention-days: 5
+      env:
+        Platforms: ${{ matrix.platforms }}
+        Configuration: ${{ matrix.configuration }}
         
         
         
