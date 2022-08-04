@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         configuration: [Debug, Release]
+        platforms: [x86, x64]
 
     runs-on: windows-latest
     
@@ -25,19 +26,20 @@ jobs:
       with:
         fetch-depth: 0
 
-    # Add  MSBuild to the PATH: https://github.com/microsoft/setup-msbuild
+    # Add MSBuild to the PATH
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1
-      #uses: microsoft/setup-msbuild@v1.1.1
       
     # Setup NuGet 
     - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1.0.6
-    - run: nuget restore $env:Solution_Name.sln
+      uses: NuGet/setup-nuget@v1
+      
+    # NuGet Restore 
+    - run: nuget restore $($env:Solution_Name + ".sln")
 
     # Build solution
     - name: Build solution
       run: msbuild $env:Solution_Name /p:Configuration=$env:Configuration /p:platform=$env:Platforms
       env:
-        Platforms: x86|x64
+        Platforms: ${{ matrix.platforms }}
         Configuration: ${{ matrix.configuration }}
