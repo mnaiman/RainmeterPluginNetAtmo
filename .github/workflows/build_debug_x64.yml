@@ -52,10 +52,7 @@ jobs:
       env:
           Platforms: ${{ matrix.platforms }}
           Configuration: ${{ matrix.configuration }}
-    
-    - name: Copy artifact files
-      run: mkdir release_folder && copy PluginNetAtmo\obj\$env:Platforms\$env:Configuration\*.dll release_folder && copy PluginNetAtmo\obj\$env:Platforms\$env:Configuration\*.pdb release_folder
-             
+           
     # Prepare artifact for download    
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3
