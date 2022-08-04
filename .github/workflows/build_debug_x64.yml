@@ -52,12 +52,15 @@ jobs:
       env:
           Platforms: ${{ matrix.platforms }}
           Configuration: ${{ matrix.configuration }}
-          
+    
+    - name: Copy artifact files
+      run: mkdir release_folder && copy PluginNetAtmo\obj\$env:Platforms\$env:Configuration\*.dll release_folder && copy PluginNetAtmo\obj\$env:Platforms\$env:Configuration\*.pdb release_folder
+             
     # Prepare artifact for download    
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: PluginNetAtmo-${{ matrix.configuration }}-${{ matrix.platforms }}-${GITHUB_SHA::7}.dll
+        name: PluginNetAtmo-${{ matrix.configuration }}-${{ matrix.platforms }}-${GITHUB_SHA}.dll
         # A file, directory or wildcard pattern that describes what to upload
         path:  |
           release_folder\*.dll
