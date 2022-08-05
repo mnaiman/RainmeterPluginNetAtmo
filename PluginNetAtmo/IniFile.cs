@@ -24,10 +24,10 @@ namespace PluginNetAtmo
 
         public void Write(string Section, string Key, string Value) => WritePrivateProfileString(Section, Key, Value, Path);
 
-        public void DeleteKey(string Section, string Key) => Write(Key, null, Section);
+        public void DeleteKey(string Section, string Key) => Write(Section, Key, null);
 
-        public void DeleteSection(string Section) => Write(null, null, Section);
+        public void DeleteSection(string Section) => Write(Section, null, null);
 
-        public bool KeyExists(string Section, string Key) => Read(Key, Section).Length > 0;
+        public bool KeyExists(string Section, string Key) => Read(Section, Key).Length > 0;
     }
 }
