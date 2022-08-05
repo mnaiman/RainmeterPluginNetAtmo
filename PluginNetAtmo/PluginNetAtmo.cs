@@ -51,11 +51,6 @@ namespace PluginNetAtmo
             API.Log(log_type, "[" + rainmeterAPI.GetMeasureName() + "] " + message);
         }
 
-        private void DelegateMethod(string message)
-        {
-            Console.WriteLine(message);
-        }
-
         internal void Reload(API rm, ref double maxValue)
         {
             rainmeterAPI = rm;
@@ -173,6 +168,8 @@ namespace PluginNetAtmo
         }
         internal double Update()
         {
+            Logger(API.LogType.Debug, "PluginNetAtmo.dll: Entering function: Update");
+
             try
             {
                 switch (m_Action)
