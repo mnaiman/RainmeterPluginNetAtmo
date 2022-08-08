@@ -193,14 +193,39 @@ namespace PluginNetAtmo
 
                 return true;
             }
+            catch (System.Net.WebException wex)
+            {
+                if (wex.Status == WebExceptionStatus.ProtocolError && ((HttpWebResponse)wex.Response).StatusCode == HttpStatusCode.BadRequest)
+                {
+                    Log.Invoke(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.RequestAccessToken: " + wex.Message + request.RequestUri.ToString() + postData);
+                    Log.Invoke(API.LogType.Error, "In case of failed refresh_token use following authorization URL to generate new Code and update in config");
+                    Log.Invoke(API.LogType.Error, $"https://api.netatmo.com/oauth2/authorize?client_id={WebUtility.HtmlEncode(loginData.client_id)}&scope={WebUtility.HtmlEncode(loginData.scope)}&state={WebUtility.HtmlEncode(Guid.NewGuid().ToString())}&redirect_uri={WebUtility.HtmlEncode(redirectUrl)}");
+                    Log.Invoke(API.LogType.Debug, $"PluginNetAtmo.dll: Deleting old AccessToken");
+                    Log.Invoke(API.LogType.Debug, $"PluginNetAtmo.dll: Deleting old RefreshToken");
+
+                    accessToken = "";
+                    refreshToken = "";
+                    settingsIni.DeleteKey("PluginNetAtmo", "AccessToken");
+                    settingsIni.DeleteKey("PluginNetAtmo", "RefreshToken");
+                    settingsIni.DeleteKey("PluginNetAtmo", "AccessTokenExpireAt");
+                    return false;
+                }
+
+                Log.Invoke(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.RequestAccessToken: " + wex.Message);
+                Log.Invoke(API.LogType.Debug, $"PluginNetAtmo.dll: Deleting old AccessToken");
+
+                accessToken = "";
+                settingsIni.DeleteKey("PluginNetAtmo", "AccessToken");
+                settingsIni.DeleteKey("PluginNetAtmo", "AccessTokenExpireAt");
+                return false;
+            }
             catch (Exception ex)
             {
-                Log.Invoke(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.RequestAccessToken: " + ex.Message + request.RequestUri.ToString() + postData);
-                Log.Invoke(API.LogType.Error, "In case of failed refresh_token use following authorization URL to generate new Code and update in config");
-                Log.Invoke(API.LogType.Error, $"https://api.netatmo.com/oauth2/authorize?client_id={WebUtility.HtmlEncode(loginData.client_id)}&scope={WebUtility.HtmlEncode(loginData.scope)}&state={WebUtility.HtmlEncode(Guid.NewGuid().ToString())}&redirect_uri={WebUtility.HtmlEncode(redirectUrl)}");
+                Log.Invoke(API.LogType.Error, "PluginNetAtmo.dll: Exception in function NetAtmo.RequestAccessToken: " + ex.Message);
+                Log.Invoke(API.LogType.Debug, $"PluginNetAtmo.dll: Deleting old AccessToken");
 
+                accessToken = "";
                 settingsIni.DeleteKey("PluginNetAtmo", "AccessToken");
-                settingsIni.DeleteKey("PluginNetAtmo", "RefreshToken");
                 settingsIni.DeleteKey("PluginNetAtmo", "AccessTokenExpireAt");
                 return false;
             }
